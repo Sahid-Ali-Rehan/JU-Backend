@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
+const cors = require("cors");
 const connectDB = require('./config/db');
 require('dotenv').config();
 
@@ -14,11 +15,14 @@ const userRoutes = require('./routes/userRoutes');
 const app = express();
 app.use(bodyParser.json());
 app.use(express.json());
+app.use(cors());
 
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
+
+
 
 
 app.get('/', (req, res) => {

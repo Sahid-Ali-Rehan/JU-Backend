@@ -22,12 +22,15 @@ router.post('/signup', async (req, res) => {
     await user.save();
     res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    console.error(error); // Log the full error
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
+
 // Login
 // Login
+// Login route in backend (adjusted)
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -43,18 +46,12 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-    // If the user is an admin, redirect them to /admin
-    if (user.role === 'admin') {
-      return res.status(200).json({ message: 'Login successful', token, redirectTo: '/admin' });
-    }
-
-    // If the user is a regular customer, respond normally
-    res.status(200).json({ message: 'Login successful', token });
+    res.status(200).json({ message: 'Login successful', token, role: user.role });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
   }
 });
+
 
 
 // Logout (example placeholder)
