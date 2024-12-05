@@ -25,45 +25,62 @@ const isAdmin = (req, res, next) => {
 
 // Add Product (Admin Only)
 router.post('/add', async (req, res) => {
-    try {
-      const {
-        productName,
-        description,
-        images,
-        availableColors,
-        availableSizes,
-        stock,
-        price,
-        discount,
-        productCode,
-        isBestSeller,
-      } = req.body;
-  
-      // Create a new product
-      const product = new Product({
-        productName,
-        description,
-        images,
-        availableColors,
-        availableSizes,
-        stock,
-        price,
-        discount,
-        productCode,
-        isBestSeller,
-      });
-  
-      await product.save();
-  
-      res.status(201).json({ message: 'Product added successfully', product });
-    } catch (error) {
-      res.status(500).json({ message: 'Server error', error });
-    }
-  });
-  
+  const {
+    productName,
+    description,
+    images,
+    sizeChart,
+    availableColors,
+    availableSizes,
+    stock,
+    price,
+    discount,
+    productCode,
+    category,
+    subCategory,
+    isBestSeller,
+  } = req.body;
+
+  try {
+    const newProduct = new Product({
+      productName,
+      description,
+      images,
+      sizeChart,
+      availableColors,
+      availableSizes,
+      stock,
+      price,
+      discount,
+      productCode,
+      category,
+      subCategory,
+      isBestSeller,
+    });
+
+    await newProduct.save();
+    res.status(201).json({ message: 'Product added successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error adding product', error: error.message });
+  }
+});
+
+
+router.post('/add', async (req, res) => {
+  try {
+    const newProduct = new Product(req.body);
+    await newProduct.save();
+    res.status(201).json({ message: 'Product added successfully' });
+  } catch (error) {
+    console.error('Error adding product:', error); // Log the error
+    res.status(500).json({ message: 'Error adding product', error: error.message });
+  }
+});
+
 
 // Update Product (Admin Only)
-router.put('/update/:id',  async (req, res) => {
+// Update Product (Admin Only)
+router.put('/update/:id', isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
@@ -83,23 +100,77 @@ router.put('/update/:id',  async (req, res) => {
   }
 });
 
-// Delete Product (Admin Only)
-router.delete('/delete/:id',  async (req, res) => {
-    try {
-      const { id } = req.params;
-  
-      // Find and delete the product by its ID
-      const product = await Product.findByIdAndDelete(id);
-  
-      if (!product) {
-        return res.status(404).json({ message: 'Product not found' });
-      }
-  
-      res.status(200).json({ message: 'Product deleted successfully' });
-    } catch (error) {
-      res.status(500).json({ message: 'Server error', error });
+
+
+
+
+// Fetch a product by ID (Admin or anyone with a valid token can access)
+router.get('/details/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    console.log("Fetching product with ID:", id); // Log the product ID
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
     }
-  });
+    res.status(200).json(product);
+  } catch (error) {
+    console.log("Error fetching product:", error); // Log the error
+    res.status(500).json({ message: 'Error fetching product', error: error.message });
+  }
+});
+
+
+
+// Fetch all products
+// Adjusted route for pagination and filtering
+router.get('/fetch-products', async (req, res) => {
+  const { search, category, subCategory, color, size, sort, page = 1, perPage = 10, productCode } = req.query;
+
+  let query = {};
+
+  if (search) query.productName = { $regex: search, $options: 'i' };
+  if (productCode) query.productCode = { $regex: productCode, $options: 'i' };
+
+  if (category) query.category = category;
+  if (subCategory) query.subCategory = subCategory;
+  if (color) query.availableColors = { $in: [color] };
+  if (size) query.availableSizes = { $in: [size] };
+
+  let sortOrder = {};
+  if (sort === 'low-to-high') {
+    sortOrder.price = 1;
+  } else if (sort === 'high-to-low') {
+    sortOrder.price = -1;
+  }
+
+  try {
+    const products = await Product.find(query)
+      .sort(sortOrder)
+      .skip((page - 1) * perPage)
+      .limit(Number(perPage));
+
+    res.status(200).json(products);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching products', error: error.message });
+  }
+});
+
+// Route to get a single product by ID
+router.get('/single/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const product = await Product.findById(id); // Assuming you're using MongoDB
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching product', error: err.message });
+  }
+});
+
   
 
 module.exports = router;

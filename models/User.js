@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const validator = require('validator');
 
 const userSchema = new mongoose.Schema({
+  orders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order' }],
   fullname: {
     type: String,
     required: true,

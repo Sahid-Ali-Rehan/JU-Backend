@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
-const productSchema = new mongoose.Schema({
+const productSchema = new mongoose.Schema(
+  {
     productName: {
       type: String,
       required: true,
@@ -24,6 +25,9 @@ const productSchema = new mongoose.Schema({
     },
     availableSizes: {
       type: [String],
+    },
+    sizeChart: {
+      type: String, // Size chart image URL
     },
     stock: {
       type: Number,
@@ -56,7 +60,8 @@ const productSchema = new mongoose.Schema({
     subCategory: {
       type: String,
     },
-  }, { timestamps: true });
-  
-  module.exports = mongoose.model('Product', productSchema);
-  
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model('Product', productSchema);
